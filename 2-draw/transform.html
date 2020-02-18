@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>canvas transform</title>
+</head>
+<body>
+<canvas id='canvas' width="600" height="400">浏览器不支持canvas</canvas>
+<script>
+var canvas = document.getElementById('canvas'),
+	ctx = canvas.getContext('2d'),
+	W = canvas.width,
+	H = canvas.height;
+
+ctx.lineWidth=2;
+ctx.lineCap="square";
+ctx.fillStyle='hsla(30,100%,50%,1)';
+ctx.strokeStyle='hsla(60,100%,50%,1)';
+
+ctx.translate(100,100);//移动
+
+ctx.save();
+trangle();
+ctx.restore();
+
+ctx.save();
+ctx.rotate(Math.PI/2);//旋转90度
+trangle();
+ctx.restore();
+
+ctx.save();
+ctx.rotate(-Math.PI/2);//旋转-90度
+trangle();
+ctx.restore();
+
+ctx.save();
+ctx.transform(-1,0,0,-1,0,0);//x,y轴反转，等于旋转180度
+trangle();
+ctx.restore();
+
+ctx.translate(100,100);
+ctx.save();
+ctx.scale(0.6,0.6);//缩放
+trangle();
+ctx.restore();
+
+ctx.save();
+// ctx.transform(Math.cos(Math.PI/6),Math.sin(Math.PI/6),-Math.sin(Math.PI/6),Math.cos(Math.PI/6),50,50);//旋转30˚
+ctx.transform(1,0,0.5,1,50,50);//位移加错切
+ctx.rect(0,0,100,80);
+ctx.fill();
+ctx.stroke();
+ctx.restore();
+
+var img = new Image();
+img.src='./imgs/love2.png';
+img.onload=function(e){
+	ctx.save();
+	ctx.transform(1,0,0.5,1,50,-50);//斜切后绘制图像
+	ctx.drawImage(img,0,0);
+	ctx.restore();
+};
+
+function trangle(){
+	ctx.moveTo(0,0);
+	ctx.lineTo(0,100);
+	ctx.lineTo(50,100);
+	ctx.closePath();
+	ctx.stroke();
+	ctx.fill();
+}
+
+</script>
+</body>
+</html>

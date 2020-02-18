@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<canvas id="mycanvas" width="400" height="400" style="border: 1px solid #0E2D5F"></canvas>
+<script>
+    var canvasDom=document.getElementById("mycanvas");
+    var ctx=canvasDom.getContext("2d");
+
+    var rectWidth=100;
+    var rectHeight=100;
+
+
+    function drawRect(centerX,centerY,scaleX,scaleY){
+        ctx.clearRect(0,0,canvasDom.width,canvasDom.height);
+        ctx.save();
+        ctx.translate(centerX,centerY);
+        ctx.scale(scaleX*2,scaleY*2);
+        ctx.fillStyle="#0E2D5F";
+        ctx.fillRect(-rectWidth/2,-rectWidth/2,rectWidth,rectHeight);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(centerX,centerY);
+        ctx.scale(scaleX,scaleY);
+        ctx.fillStyle="#ffffff";
+        ctx.fillRect(-rectWidth/2,-rectWidth/2,rectWidth,rectHeight);
+        ctx.restore();
+    }
+
+    drawRect(canvasDom.width/2,canvasDom.height/2,1,1);
+</script>
+</body>
+</html>

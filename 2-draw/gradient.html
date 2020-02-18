@@ -1,0 +1,63 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>渐变</title>
+</head>
+<body>
+<canvas id="canvas" width="400" height="400"></canvas>
+<script>
+	var canvas=document.getElementById('canvas'),
+		ctx=canvas.getContext('2d'),
+		W=canvas.width,
+		H=canvas.height;
+
+	ctx.translate(W/2,H/2);
+	// ctx.globalCompositeOperation = "lighter";
+	// ctx.fillStyle='rgba(0,0,0,0.9)';
+	// ctx.fillRect(-W/2,-H/2,W,H);
+
+	//线性渐变
+	var gradient=ctx.createLinearGradient(0,0,W,0);//线性渐变
+	gradient.addColorStop(0,'blue');
+	gradient.addColorStop(0.25,'white');
+	gradient.addColorStop(0.5,'purple');
+	gradient.addColorStop(0.75,'red');
+	gradient.addColorStop(1,'yellow');
+
+	// 径向渐变
+	// 放射渐变 开始坐标x，开始坐标y，开始点半径，结束坐标x，结束坐标y，结束点半径
+	// 起始的圆和结束圆分离时的渐变
+	// var rdGradient=ctx.createRadialGradient(0,-H/2,50,0,H/2,100);
+	var rdGradient=ctx.createRadialGradient(0,H+H/4,W,0,H/2,0);
+	// var rdGradient=ctx.createRadialGradient(0,0,200,0,H/2,200);
+	rdGradient.addColorStop(0,'black');
+	rdGradient.addColorStop(0.2,'red');
+	rdGradient.addColorStop(0.4,'orange');
+	rdGradient.addColorStop(0.6,'yellow');
+	rdGradient.addColorStop(1,'white');
+	
+	
+	// 起始点和终点重合，则会画出一个渐变同心圆
+	// var rdGradient=ctx.createRadialGradient(0,0,0,0,0,100);
+	// rdGradient.addColorStop(0,'white');
+	// rdGradient.addColorStop(0.5,'white');
+	// rdGradient.addColorStop(0.7,'yellow');
+	// rdGradient.addColorStop(0.8,'orange');
+	// rdGradient.addColorStop(1,'black');
+
+	// 应用线性渐变
+	// ctx.fillStyle=gradient;
+	// ctx.fillRect(0,0,W,H);
+
+	// 应用放射渐变
+	// ctx.globalCompositeOperation = "lighter";
+	ctx.fillStyle=rdGradient;
+	ctx.beginPath();
+	// ctx.rotate(Math.PI);
+	// ctx.arc(0,0,200,Math.PI*2,false);
+	// ctx.fillRect(-W/2,-H/2,W,H);//fillRect和rect，fill等效
+	ctx.rect(-W/2,-H/2,W,H);
+	ctx.fill();
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>clip实现橡皮擦功能</title>
+
+</head>
+<body>
+<canvas id="canvas" width='600' height="400"></canvas>	
+<script>
+	var canvas=document.getElementById('canvas'),
+		ctx=canvas.getContext('2d'),
+		W=canvas.width,
+		H=canvas.height,
+		rubberWidth=30,
+		rubberHeight=30,
+		rubberLineWidth=1,
+		lastPos={x:0,y:0};
+
+	//画网格线
+	function drawGrid(color,stepx,stepy){
+		ctx.lineWidth=0.5;
+		ctx.strokeStyle=color;
+
+		for(var i=stepx+0.5;i<ctx.canvas.width;i+=stepx){
+			ctx.beginPath();
+			ctx.moveTo(i,0);
+			ctx.lineTo(i,ctx.canvas.height);
+			ctx.stroke();
+		}
+
+		for(var i=stepy+0.5;i<ctx.canvas.height;i+=stepy){
+			ctx.beginPath();
+			ctx.moveTo(0,i);
+			ctx.lineTo(ctx.canvas.width,i);
+			ctx.stroke();
+		}
+	}
+
+	//获取坐标
+	function windowToCanvas(x,y){
+		var bbox=canvas.getBoundingClientRect();
+		return {
+			x:x-bbox.left*(W/bbox.width),
+			y:y-bbox.top*(H/bbox.height)
+		};
+	}
+
+	//设置要擦除的上一次的位置
+	function setLastClip(){
+		ctx.beginPath();
+		ctx.rect(lastPos.x-rubberWidth/2-rubberLineWidth,
+			lastPos.y-rubberHeight/2-rubberLineWidth,
+			rubberWidth+2*rubberLineWidth,
+			rubberHeight+2*rubberLineWidth);
+		ctx.clip();//限定要擦除的区域
+	}
+
+	//清除上一次的位置
+	//注意: clip 和 填充clip的动作，必须在同一 save,restore中
+	function clearLast(){
+		ctx.save();
+		setLastClip();
+		ctx.clearRect(0,0,W,H);
+		ctx.fillStyle='hsl(0,100%,70%)';
+		drawGrid('#ddd',10,10);
+		ctx.restore();
+	}
+
+	//画当前位置的橡皮擦
+	function drawRubber(pos){
+		ctx.save();
+		ctx.fillStyle='#fff';
+		ctx.strokeStyle='#ddd';
+		ctx.lineWidth=rubberLineWidth;
+		ctx.lineJoin='round';
+		ctx.beginPath();
+		ctx.rect(pos.x-rubberWidth/2,pos.y-rubberHeight/2,rubberWidth,rubberHeight);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+	}
+
+
+	canvas.onmousedown=function(e){
+		e.preventDefault();
+		lastPos=windowToCanvas(e.clientX,e.clientY);
+
+		canvas.onmousemove=function(e){
+			e.preventDefault();
+			var pos=windowToCanvas(e.clientX,e.clientY);
+			clearLast();
+			drawRubber(pos);
+			lastPos.x=pos.x;
+			lastPos.y=pos.y;
+		};
+
+		canvas.onmouseup=function(e){
+			e.preventDefault();
+			clearLast();
+			canvas.onmousemove=null;
+			canvas.onmouseup=null;
+		};
+	};
+
+	ctx.fillStyle='hsla(30,100%,70%,1)';
+	ctx.fillRect(0,0,W,H);
+</script>
+</body>
+</html>

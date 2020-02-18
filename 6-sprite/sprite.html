@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>将多个行为组合起来_可暂停</title>
+        <style>
+            body{
+                background: #ddd;
+            }
+            #canvas{
+                position: absolute;
+                top: 30px;
+                left: 10px;
+                background: #FFFFFF;
+                cursor: crosshair;
+                margin-left: 10px;
+                margin-top: 10px;
+                box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+                -webkit-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+                -moz-box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+            }
+            input{
+                margin-left: 15px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <input id="animateButton" type="button" value="Animate" />
+        <canvas id="canvas" width="462" height="500"></canvas>
+
+    </body>
+    <!-- 精灵对象 -->
+    <script>
+        var Sprite = function(name,painter,behaviors){
+            if(name !== undefined){ this.name = name; }
+            if(painter !== undefined){ this.painter = painter; }
+
+            this.top = 0;
+            this.left = 0;
+            this.width = 5;
+            this.height = 5;
+            this.velocityX = 0;
+            this.velocityY = 0;
+            this.visible = true;
+            this.animating = false;
+            this.behaviors = behaviors || [];
+
+        }
+
+        Sprite.prototype = {
+            paint:function(context){
+                if(this.painter !== undefined && this.visible){
+                    this.painter.paint(this,context);
+                }
+            },
+            update:function(context,time){
+                for(var i=0;i<this.behaviors.length;i++){
+                    this.behaviors[i].execute(this,context,time);
+                }
+            }
+        }
+    </script>
+    <!-- 精灵表绘制器 -->
+    <script>
+        var SpriteSheetPainter = function(cells){
+            this.cells = cells || [];
+            this.cellIndex = 0;
+        }
+
+        SpriteSheetPainter.prototype = {
+            advance:function(){
+                if(this.cellIndex == (this.cells.length-1)){
+                    this.cellIndex = 0;
+                }else{
+                    this.cellIndex++;
+                }
+            },
+            paint:function(sprite,context){
+                var cell = this.cells[this.cellIndex];
+                context.drawImage(spritesheet,cell.x,cell.y,cell.w,cell.h,sprite.left,sprite.top,cell.w,cell.h);
+            }
+        }
+    </script>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+        var animateButton = document.getElementById('animateButton');
+
+        var spritesheet = new Image();
+
+        var runnerCells =[
+                        {x:0,y:0,w:47,h:64},
+                        {x:55,y:0,w:44,h:64},
+                        {x:107,y:0,w:39,h:64},
+                        {x:152,y:0,w:46,h:64},
+                        {x:212,y:0,w:47,h:64},
+                        {x:265,y:0,w:46,h:64},
+                        {x:320,y:0,w:42,h:64},
+                        {x:380,y:0,w:35,h:64},
+                        {x:425,y:0,w:35,h:64}
+                    ];
+
+        //原地奔跑
+        var runInPlace = {
+            lastAdvance :0,
+            pageFlip_interval:100,
+            execute:function(sprite,context,time){
+
+                if(time - this.lastAdvance >this.pageFlip_interval){
+                    if(!paused){
+                        sprite.painter.advance();
+                    }
+                    this.lastAdvance = time;
+                }
+            }
+        };
+
+        //从右向左
+        var moveRightToLeft = {
+            lastMove :0,
+            execute:function(sprite,context,time){
+
+                if(this.lastMove !==0){
+                    if(!paused){
+                        sprite.left -= sprite.velocityX*((time-this.lastMove)/1000);
+                        if(sprite.left<-64){
+                            sprite.left = canvas.width;
+                        }
+                    }
+                }
+                this.lastMove = time;
+            }
+        }
+
+        var sprite = new Sprite('runner',new SpriteSheetPainter(runnerCells),[runInPlace,moveRightToLeft]);
+
+        var paused = true;
+
+        //初始化
+        spritesheet.src = '../img/running-sprite-sheet.png';
+        spritesheet.onload = function(){
+            context.drawImage(spritesheet,0,0);
+        }
+
+        sprite.velocityX = 30; //每秒在X轴的位移
+        sprite.left = 200;
+        sprite.top = 100;
+
+        context.strokeStyle = 'lightgray';
+        context.lineWidth =0.5;
+
+        drawBackground();
+
+        //事件
+        animateButton.onclick = function(){
+            if(animateButton.value == 'Animate'){
+                startAnimation();
+            }else{
+                pauseAnimation();
+            }
+        }
+
+        //动画函数
+        function animate(time){
+            if(!paused){
+                context.clearRect(0,0,canvas.width,canvas.height);
+                drawBackground();
+                context.drawImage(spritesheet,0,0);
+            }
+
+            //这里让time,与lastTime保持更新，当前图片定位张数与距离左边距离都不更新
+            sprite.update(context,time);
+
+            if(!paused){
+                sprite.paint(context);
+            }
+            window.requestAnimationFrame(animate);
+        }
+        //功能函数
+        function startAnimation(){
+            paused = false;
+            animateButton.value = 'Pause';
+            window.requestAnimationFrame(animate);
+        }
+
+        function pauseAnimation(){
+            paused = true;
+            animateButton.value = 'Animate';
+        }
+        //绘制横隔背景
+        function drawBackground(){
+            context.save();
+            context.shadowColor = undefined;
+            context.shadowOffsetX = 0;
+            context.shadowOffsetY = 0;
+            context.shadowBlur = 0;
+
+            var step_y = 12;
+            var left_margin = step_y*4;
+            var top_margin = 64;
+            var i = canvas.height;
+
+            context.strokeStyle = 'lightgray';
+            context.lineWidth = 0.5;
+
+            while(i>top_margin){
+                context.beginPath();
+                context.moveTo(0,i);
+                context.lineTo(canvas.width,i);
+                context.stroke();
+                i-=step_y;
+            }
+            context.restore();
+        } 
+    </script>
+</html>

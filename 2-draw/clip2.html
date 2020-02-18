@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>clip实现伸缩式动画</title>
+	<style>
+
+	</style>
+</head>
+<body>
+<canvas id="canvas" width="600" height="400"></canvas>
+<script>
+	var canvas=document.getElementById('canvas'),
+		ctx=canvas.getContext('2d'),
+		w=canvas.width,
+		h=canvas.height;
+
+	ctx.lineWidth=0.5;
+	ctx.font='128pt Comic-sans';
+
+	function drawText(){
+		ctx.shadowColor='rgba(100,100,150,0.8)';
+		ctx.shadowOffsetX=5;
+		ctx.shadowOffsetX=5;
+		ctx.shadowBlur=10;
+
+		ctx.fillStyle='cornflowerblue';
+		ctx.fillText('html5',20,250);
+		ctx.strokeStyle='yellow';
+		ctx.strokeText('html5',20,250);
+	}
+
+	canvas.onmousedown=function(){
+		var radius=Math.min(w,h);
+		(function run(){
+			ctx.clearRect(0,0,w,h);
+			if(radius<1){
+				drawText();
+				return;
+			}
+			ctx.save();
+			ctx.fillStyle='hsla(200,100%,70%,1)';
+			ctx.fillRect(0,0,w,h);
+
+			ctx.beginPath();
+			ctx.arc(w/2,h/2,radius,0,Math.PI*2,false);
+			ctx.clip();//注意: clip 和 填充clip的动作，必须在同一 save,restore中
+
+			ctx.clearRect(0,0,w,h);
+			drawText();
+			ctx.restore();
+			radius-=radius/50;
+			radius=radius<5?0:radius;
+			requestAnimationFrame(run);
+		}());
+	};
+	drawText();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        canvas{
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+<canvas width="800" height="600"></canvas>
+<script>
+    var canvas=document.querySelector('canvas');
+    var ctx=canvas.getContext('2d');
+    //初始圆
+    ctx.arc(200,200,50,0,2*Math.PI);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.scale(2,2);
+    //横纵坐标都放大了2倍
+    //半径也放大了2倍
+    ctx.strokeStyle='red';
+    ctx.arc(200/2,200/2,50,0,2*Math.PI);
+    ctx.stroke();
+</script>
+</body>
+</html>

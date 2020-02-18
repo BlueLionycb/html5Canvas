@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+    
+    <script>
+        
+        /** 
+ * @author wsf 
+ */  
+G_LTIE8 = !document.createElement('canvas').getContext;//是否是ie9一下的版本的ie  
+//利用html5 canvas 画的常用小图标  
+;(function(win, $) {  
+    /** 
+     * 公共代码 
+     */  
+    function getCommon(canvasId, width, height) {  
+        var obj = document.getElementById(canvasId);  
+        if (obj.nodeName.toLowerCase() != "canvas")  
+            alert("有元素与此canvas元素id冲突！");  
+        if (obj == null) {  
+            _obj = $('<canvas id="' + canvasId + '" width="' + width + '" height="' + height + '"></canvas>')  
+            _obj.appendTo($("body"));  
+            obj = _obj[0];  
+        }  
+        if (G_LTIE8) {  
+            obj = G_vmlCanvasManager.initElement(obj);//ie下初始化canvas对象  
+        }  
+        return obj.getContext('2d');  
+    }  
+    /** 
+     * 绑定事件公共方法 
+     */  
+    function bindEvent(target,events,args){  
+        for(var name in events){  
+            target.bind(name,function (){  
+                events[name](args);  
+            });  
+        }  
+    }  
+      
+  
+    var icons = {};  
+    icons = $.extend(icons, {  
+          loading : {  
+            showLoading :function (){  
+                var ctx = getCommon("loading", 100, 100);  
+                var loadingInterval = null;  
+                $("#loading").parent().show();  
+                function _showLoading() {  
+                    var rotatorAngle = Math.PI * 2.5;  
+                    //弧度  
+                    var step = Math.PI / 6;  
+                    loadingInterval = setInterval(function() {//定时器 定时触发函数  
+                        //取得二第效果  
+                        var radius = 20;  
+                        //全的半径  
+                        ctx.clearRect(0, 0, 100, 100);  
+                        //清除页面  
+                        var lineWidth = 3;  
+                        //线的宽度  
+                        ctx.beginPath();  
+                        //开始画图  
+                        ctx.lineWidth = lineWidth;  
+                        //线的宽度  
+                        ctx.strokeStyle = 'blue';  
+                        ctx.fillStyle = "#ccc";  
+                        center = {  
+                            x : 100 / 2,  
+                            y : 100 / 2  
+                        };  
+                        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);  
+                        ctx.closePath();  
+                        ctx.stroke();  
+                        ctx.beginPath();  
+                        //开始画弧线  
+                        ctx.strokeStyle = '#587dbf';  
+                        //线条的颜色的颜色  
+                        ctx.arc(center.x, center.y, radius, rotatorAngle, rotatorAngle + Math.PI * .45);  
+                        //语法：arc(定义一个中心点，半径，起始角度，结束角度)  
+                        ctx.stroke();  
+                        ctx.fill();  
+                        //绘制  
+                        rotatorAngle += step;  
+                    }, 50/* 这是延迟多少秒做函数*/)  
+                    //*以上是划一个圈  
+                }  
+                  
+                _showLoading();//显示加载中  
+            },  
+            /**  
+             * 隐藏loading  
+             */  
+            hiddenLoading:function (){  
+                $("#loading").parent().hide();//  
+            }  
+        },  
+        search : function(events) {  
+            /** 
+             * 开始画搜索按钮 
+             */  
+            var id = "searchBtnCvs";  
+            var cvs = $("#" + id);  
+            var ctx = getCommon(id, 30, 30);  
+            function _drawSearch() {  
+                ctx.beginPath();  
+                ctx.arc(15, 15, 10, 0, Math.PI * 2, true);  
+                ctx.save();  
+                ctx.moveTo(20, 20);  
+                //原点  
+                ctx.lineWidth = 5;  
+                ctx.lineTo(29, 29);  
+                ctx.strokeStyle = "#95A3F3";  
+                ctx.stroke();  
+                ctx.save();  
+  
+            }  
+            bindEvent(cvs,events,ctx);  
+            _drawSearch();  
+            //调用  
+        },  
+        //向上箭头  
+          
+        arrowUp : function(events) {  
+            var cvs = $("#arrowUp");  
+            var ctx = getCommon("arrowUp", 30, 30);  
+            var _arrowUp = function() {  
+                //画线  
+                ctx.beginPath();  
+                ctx.lineWidth = 5;  
+                ctx.strokeStyle = '#587dbf';  
+                //线条颜色  
+                //坐标源点  
+                ctx.moveTo(11, 25);  
+                ctx.lineTo(11, 5);  
+                ctx.fill();  
+                //充满整个区域  
+                ctx.stroke();  
+                ctx.save();  
+  
+                ctx.moveTo(12, 3);  
+                //坐标原点  
+                ctx.lineTo(3, 15);  
+                ctx.stroke();  
+                ctx.save();  
+  
+                ctx.moveTo(10, 3);  
+                ctx.lineTo(19, 15);  
+                ctx.stroke();  
+                ctx.save();  
+  
+                ctx.closePath();  
+            }  
+            bindEvent(cvs,events,ctx);  
+            _arrowUp();  
+        },  
+        //向下箭头  
+        arrowDown : function(events,callback) {  
+            var cvs = $("#arrowDown");  
+            var ctx = getCommon("arrowDown", 30, 30);  
+            function _arrowDown() {  
+                //画线  
+                ctx.beginPath();  
+                ctx.lineWidth = 5;  
+                ctx.strokeStyle = '#587dbf';  
+                //线条颜色  
+                //坐标源点  
+                ctx.moveTo(11, 0);  
+                ctx.lineTo(11, 25);  
+                ctx.fill();  
+                //充满整个区域  
+                ctx.stroke();  
+                ctx.save();  
+  
+                ctx.moveTo(12, 28);  
+                var _x1 = Math.floor(12 + 4 * Math.sin(45));  
+                var _y1 = Math.floor(28 + 4 * Math.cos(45));  
+                //坐标原点  
+                ctx.lineTo(3, 15);  
+                ctx.stroke();  
+                ctx.save();  
+  
+                ctx.moveTo(12, 28);  
+                ctx.lineTo(20, 14);  
+                ctx.stroke();  
+                ctx.save();  
+  
+                ctx.closePath();  
+            }  
+            bindEvent(cvs,events,ctx);  
+            _arrowDown();  
+        },  
+        //下拉列表图标  
+        select : function(callback) {  
+            var id = "selectBtnCvs";  
+            var cvs = $("#" + id);  
+            var ctx = getCommon(id, 30, 30);  
+            function _arrowDefault() {  
+                //画线  
+                ctx.beginPath();  
+                ctx.lineWidth = 3;  
+                ctx.fillStyle = "#95A3F3";  
+                //线条颜色  
+                //坐标源点  
+                ctx.moveTo(15, 22);  
+                ctx.lineTo(30, 15);  
+                ctx.lineTo(15, 7);  
+                ctx.fill();  
+  
+            }  
+  
+            function _arrowDown() {  
+                //画线  
+                ctx.beginPath();  
+                ctx.lineWidth = 3;  
+                ctx.fillStyle = "#95A3F3";  
+                //线条颜色  
+                //坐标源点  
+                ctx.moveTo(28, 10);  
+                ctx.lineTo(20, 25);  
+                ctx.lineTo(12, 10);  
+                ctx.fill();  
+                ctx.closePath();  
+            }  
+  
+            var _events = {  
+                "mouseover" : function(e) {  
+                    ctx.clear();  
+                    _arrowDown();  
+                    if (callback)  
+                        callback(true,e);//回调  
+                },  
+                "mouseout" : function(e) {  
+                    ctx.clear();  
+                    _arrowDefault();  
+                    if (callback)  
+                        callback(false,e)//回调  
+                }  
+            }  
+            for(var name in _events){  
+                cvs.bind(name,_events[name]);  
+            }  
+            _arrowDefault(callback);  
+        },  
+        blankArrow:{  
+            arrwoDown:function (events){  
+                var id = "expenddivBtnCvs";  
+                var cvs = $("#"+id);  
+                var ctx = getCommon(id, 40, 20);//id,宽，高  
+                function _init (){  
+                    ctx.beginPath();  
+                    ctx.lineWidth = 1;  
+                    ctx.strokeStyle = "blue";  
+                    ctx.fillStyle= "blue";  
+                    //坐标源点  
+                    ctx.moveTo(3, 3);  
+                    ctx.lineTo(15, 8);  
+                    ctx.lineTo(27, 3);  
+                    ctx.stroke();  
+                    ctx.fill();  
+                    ctx.closePath();  
+                }  
+                bindEvent(cvs,events,ctx);  
+                _init();//自己调用  
+            },  
+            arrwoUp:function (events){  
+                var id = "unexpendBtnCvs";  
+                var cvs = $("#"+id);  
+                var ctx = getCommon(id, 40, 20);//id,宽，高  
+                function _init (){  
+                    ctx.beginPath();  
+                    ctx.lineWidth = 1;  
+                    ctx.strokeStyle = "#95A3F3";  
+                    ctx.fillStyle= "#95A3F3";  
+                    //坐标源点  
+                    ctx.moveTo(3, 8);  
+                    ctx.lineTo(15, 3);  
+                    ctx.lineTo(28, 8);  
+                    ctx.stroke();  
+                    ctx.fill();  
+                    ctx.closePath();  
+                }  
+                bindEvent(cvs,events,ctx);  
+                _init();//自己调用  
+            }  
+        },  
+        /** 
+         * 添加按钮 
+         * @param events 
+         */  
+        add:function (events){  
+              
+        },  
+        /** 
+         * 修改按钮 
+         * @param events 
+         */  
+        modify:function (events){  
+              
+        },  
+        /** 
+         * 删除按钮 
+         * @param events 
+         */  
+        Delete:function (events){  
+              
+        }  
+    });  
+    $.icons = icons;  
+})(window, jQuery);  
+        </script>
+</body>
+</html>

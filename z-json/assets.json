@@ -1,0 +1,38 @@
+{
+	"code": "0000",
+	"subcode": "",
+	"message": "",
+	"result": {
+		"items": [{
+			"id": 32534075,
+			"productType": "LOAN_REQUEST",
+			"productStatus": "ONLINE",
+			"productCategory": "803"
+		}, {
+			"id": 178460886,
+			"productType": "LOAN_REQUEST",
+			"productStatus": "ONLINE",
+			"productCategory": "823",
+			"subProductCategory": "82301"
+		}, {
+			"id": 190209743,
+			"productType": "LOAN_REQUEST",
+			"productStatus": "ONLINE",
+			"productCategory": "D01",
+			"subProductCategory": "17"
+		}, {
+			"id": 196539525,
+			"productType": "LOAN_REQUEST",
+			"productStatus": "ONLINE",
+			"productCategory": "D01",
+			"subProductCategory": "05"
+		}, {
+			"id": 194527333,
+			"productType": "LOAN_REQUEST",
+			"productStatus": "ONLINE",
+			"productCategory": "D01",
+			"subProductCategory": "28"
+		}]
+	},
+	"lid": "d38c83e4-2783-4bbb-b415-363d5d9f3712!278712df-456e-4f7d-babc-041c4b43a70a!0$1.1"
+}

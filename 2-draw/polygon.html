@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>可拖动的多边形画板</title>
+<style>
+	body{
+		background-color: #eee;
+	}
+	canvas{
+		cursor: pointer;
+	}
+</style>
+</head>
+<body>
+<div class="control">
+<label for="sideSel">sides</label>
+<select name="sideSel" id="sideSel">
+	<option value="3" selected="selected">3</option>
+	<option value="4">4</option>
+	<option value="5">5</option>
+	<option value="6">6</option>
+	<option value="7">7</option>
+	<option value="8">8</option>
+</select>
+<label for="angleTxt">angle:</label>
+<input type="number" name="angleTxt" id="angleTxt" style="width:50px;" value="0">
+<label for="color">color</label>
+<input type="color" name="color" id="color" value="#b6b3b7">
+<label for="fillModeCb">fillMode</label>
+<input type="checkbox" name="fillModeCb" id="fillModeCb">
+<button id="clearBtn">Clear All</button>
+<label for="isEdit">isEdit</label>
+<input type="checkbox" name="isEdit" id="isEdit">
+</div>
+<canvas id="canvas" width="600" height="400"></canvas>
+<script>
+	var canvas=document.getElementById('canvas'),
+		ctx=canvas.getContext('2d'),
+		sideSel=document.getElementById('sideSel'),
+		color=document.getElementById('color'),
+		fillModeCb=document.getElementById('fillModeCb'),
+		angleTxt=document.getElementById('angleTxt'),
+		clearBtn=document.getElementById('clearBtn'),
+		isEditCb=document.getElementById('isEdit'),
+		isDragging=false,
+		currPolygon=null,
+		imgData=null,
+		polygons=[],
+		startPos={};
+
+
+	function Polygon(sx,sy,ex,ey,sides,angle,strokeStyle,fillStyle,isFill){
+		this.sx=sx;
+		this.sy=sy;
+		this.ex=ex;
+		this.ey=ey;
+		this.sides=sides;
+		this.angle=angle;
+		this.strokeStyle=strokeStyle;
+		this.fillStyle=fillStyle;
+		this.isFill=isFill;
+		this.points=[];
+	}
+
+	Polygon.prototype={
+		getPoints:function(){
+			var sides=this.sides,
+				angle=this.angle,
+				radius=Math.sqrt(Math.pow((this.ex-this.sx),2)+Math.pow((this.ey-this.sy),2));
+				this.points=[];
+			for(var i=0;i<sides;i++){
+				angle+=2*Math.PI/sides;
+				this.points.push({x:this.sx+radius*Math.sin(angle),y:this.sy-radius*Math.cos(angle)});
+			}
+			return this;
+		},
+		createPath:function(){
+			this.getPoints();
+			ctx.beginPath();
+			ctx.moveTo(this.points[0].x,this.points[0].y);
+			for(var i=0,len=this.points.length;i<len;i++){
+				ctx.lineTo(this.points[(i+1)%len].x,this.points[(i+1)%len].y);
+			}
+			ctx.closePath();
+			return this;
+		},
+		draw:function(){
+			ctx.save();
+			ctx.strokeStyle=this.strokeStyle;
+			ctx.fillStyle=this.fillStyle;
+			ctx.stroke();
+			if(this.isFill){
+				ctx.fill();
+			}
+			ctx.restore();
+			return this;
+		}
+	}
+
+	//画网格线
+	function drawGrid(color,stepx,stepy){
+		ctx.save();
+		ctx.lineWidth=0.5;
+		ctx.strokeStyle=color;
+
+		for(var i=stepx+0.5;i<ctx.canvas.width;i+=stepx){
+			ctx.beginPath();
+			ctx.moveTo(i,0);
+			ctx.lineTo(i,ctx.canvas.height);
+			ctx.stroke();
+		}
+
+		for(var i=stepy+0.5;i<ctx.canvas.height;i+=stepy){
+			ctx.beginPath();
+			ctx.moveTo(0,i);
+			ctx.lineTo(ctx.canvas.width,i);
+			ctx.stroke();
+		}
+		ctx.restore();
+	}
+
+	//获取坐标
+	function windowToCanvas(x,y){
+		var box=canvas.getBoundingClientRect();
+		return {
+			x:x-box.left*(canvas.width/box.width),
+			y:y-box.top*(canvas.height/box.height)
+		};
+	}
+
+	function clear(){
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		drawGrid('lightgray',10,10);
+	}
+
+
+	canvas.onmousedown=function(e){
+		startPos=windowToCanvas(e.clientX,e.clientY);
+		if(!isEdit.checked){
+			canvas.style.cursor='pointer'
+			imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+			polygons.push(new Polygon(startPos.x,startPos.y,startPos.x,startPos.y,parseInt(sideSel.value,10)||3,Math.PI/180*(parseInt(angleTxt.value,10)||0),'#f00',color.value,fillModeCb.checked));
+		} else{
+			canvas.style.cursor='crosshair';
+			polygons.forEach(function(item,i){
+				item.createPath();//创建路径时才能检测点是否在当前路径中
+				if(ctx.isPointInPath(startPos.x,startPos.y)){
+					currPolygon=item;
+					console.log(currPolygon);
+				}
+			});
+		}
+		isDragging=true;
+	};
+
+	canvas.onmousemove=function(e){
+		var loc=windowToCanvas(e.clientX,e.clientY);
+		if(isDragging){
+			if(isEdit.checked){
+				if(!currPolygon){return;}			
+				var w=loc.x-currPolygon.sx,
+					h=loc.y-currPolygon.sy;
+				currPolygon.sx=loc.x;
+				currPolygon.sy=loc.y;
+				currPolygon.ex+=w;
+				currPolygon.ey+=h;
+				clear();
+				polygons.forEach(function(item,i){
+					item.createPath().draw();
+				});
+			} else {
+				ctx.putImageData(imgData,0,0);
+				currPolygon=polygons[polygons.length-1];
+				currPolygon.ex=loc.x;
+				currPolygon.ey=loc.y;
+				currPolygon.createPath().draw();		
+			}
+		}
+	};
+	
+	canvas.onmouseup=function(e){
+		isDragging=false;
+		currPolygon=null;
+		canvas.style.cursor='pointer';
+	};
+
+	clearBtn.onclick=function(e){
+		clear();
+		currPolygon=null;
+		polygons=[];
+	};
+
+	drawGrid('lightgray',10,10);
+</script>
+</body>
+</html>

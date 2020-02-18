@@ -1,0 +1,100 @@
+{
+	"code": "0000",
+	"subcode": "",
+	"message": "",
+	"result": {
+		"defaultSort": {
+			"filterValueIdDesc": "",
+			"filterSortValueNameDesc": "默认"
+		},
+		"filterSorts": [{
+			"filterSortName": "起投金额",
+			"filterSortStyle": "730-66774-TABLE-OPTION",
+			"isCanJoin": true,
+			"defaultItems": [99],
+			"items": [{
+				"filterValueId": 99,
+				"filterSortValueName": "不限",
+				"filterKey": "",
+				"filterValue": ""
+			}, {
+				"filterValueId": 100,
+				"filterSortValueName": "1千元以内",
+				"filterKey": "endMinInvestAmount",
+				"filterValue": "1000"
+			}, {
+				"filterValueId": 101,
+				"filterSortValueName": "1万元及以内",
+				"filterKey": "endMinInvestAmount",
+				"filterValue": "10000"
+			}, {
+				"filterValueId": 102,
+				"filterSortValueName": "5万元及以内",
+				"filterKey": "endMinInvestAmount",
+				"filterValue": "50000"
+			}, {
+				"filterValueId": 103,
+				"filterSortValueName": "30万元及以内",
+				"filterKey": "endMinInvestAmount",
+				"filterValue": "300000"
+			}]
+		}, {
+			"filterSortName": "筛选",
+			"filterSortStyle": "715-62251",
+			"isCanJoin": true,
+			"items": [{
+				"filterValueId": 20,
+				"filterSortValueName": "产品类型",
+				"numberInRow": "3",
+				"childItemName": "产品类型",
+				"needShowOnTab": true,
+				"type": "2",
+				"childItems": [{
+					"filterValueId": 200,
+					"filterSortValueName": "零钱理财",
+					"filterKey": "productMapTypeList",
+					"filterValue": "LQLC"
+				}, {
+					"filterValueId": 201,
+					"filterSortValueName": "银行精选",
+					"filterKey": "productMapTypeList",
+					"filterValue": "YHJX"
+				}, {
+					"filterValueId": 203,
+					"filterSortValueName": "保险期限",
+					"filterKey": "productMapTypeList",
+					"filterValue": "OTHER"
+				}, {
+					"filterValueId": 206,
+					"filterSortValueName": "平安自营",
+					"filterKey": "productMapTypeList",
+					"filterValue": "PAZY"
+				}]
+			}, {
+				"filterValueId": 30,
+				"filterSortValueName": "安全等级",
+				"numberInRow": "3",
+				"childItemName": "安全等级",
+				"needShowOnTab": true,
+				"type": "2",
+				"childItems": [{
+					"filterValueId": 300,
+					"filterSortValueName": "低风险",
+					"filterKey": "productLEVELList",
+					"filterValue": "LEVEL1"
+				}, {
+					"filterValueId": 301,
+					"filterSortValueName": "中低风险",
+					"filterKey": "productLEVELList",
+					"filterValue": "LEVEL2"
+				}, {
+					"filterValueId": 302,
+					"filterSortValueName": "中风险",
+					"filterKey": "productLEVELList",
+					"filterValue": "LEVEL3"
+				}]
+			}]
+		}]
+	},
+	"lid": "d38c83e4-2783-4bbb-b415-363d5d9f3712!2fbbc8f8-03e4-4cf6-aec0-b02241763b64!0$1.1"
+}
