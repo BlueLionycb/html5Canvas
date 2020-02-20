@@ -1,0 +1,76 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Canvas</title>
+</head>
+
+<body>
+    <a href="http://staging.clicky.co.uk/canvas/">链接</a>
+
+    <canvas id="canvas" width="939" height="850" style="width: 939px; height: 850px;"></canvas><!-- #canvas -->
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext("2d");
+
+        var image;
+
+        var mapImg = new Image();
+        mapImg.onload = function () {
+
+            var mapCanvas = document.createElement("canvas");
+            mapCanvas.width = mapImg.width;
+            mapCanvas.height = mapImg.height;
+            var mapContext = mapCanvas.getContext("2d");
+
+            mapContext.drawImage(mapImg, 0, 0);
+
+            image = mapCanvas;
+            var imageContext = mapContext;
+            image.x = mapImg.width;
+            image.y = mapImg.height;
+
+            canvas.width = mapImg.width / 2;
+            canvas.height = mapImg.height / 2;
+            canvas.style.width = mapImg.width / 2 + 'px';
+            canvas.style.height = mapImg.height / 2 + 'px';
+
+            draw();
+
+        };
+        mapImg.src = 'masterplan.png';
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        }
+
+        var scale = 1;
+        const origin = { x: 0, y: 0 };
+
+        function scaleAt(at, amount) { // at is screen coords, amount is amount to scale
+            scale *= amount;
+            origin.x = at.x - (at.x - origin.x) * amount;
+            origin.y = at.y - (at.y - origin.y) * amount;
+        };
+
+        canvas.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            var lastX = e.offsetX || (e.pageX - self.canvas.offsetLeft);
+            var lastY = e.offsetY || (e.pageY - self.canvas.offsetTop);
+
+            clickedPoint = { x: lastX, y: lastY };
+
+            scaleAt(clickedPoint, 2);
+            ctx.setTransform(scale, 0, 0, scale, origin.x, origin.y);
+
+            draw();
+        });
+
+    </script>
+
+</body>
+
+</html>

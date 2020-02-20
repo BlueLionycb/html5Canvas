@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta name="description" content="canvas zoom example">
+  <meta charset="UTF-8" />
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2020 by lovefengruoqing (http://jsbin.com/purinog/2/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>zoom</title>
+
+<style id="jsbin-css">
+#canvas {
+  margin: 0 auto;
+  height: 500px;
+  width: 500px;
+}
+</style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+<script>
+const canvas = document.querySelector("#canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = canvas.style.width || 500;
+canvas.height = canvas.style.height || 500;
+
+const w = canvas.width;
+const h = canvas.height;
+
+class Color {
+  constructor(r = 255, g = 255, b = 255, a = 1) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+    this.a = a;
+  }
+
+  getColor() {
+    return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
+  }
+
+  static getRandomInt(num) {
+    return Math.ceil(Math.random() * num);
+  }
+
+  static getRandomColor() {
+    const r = this.getRandomInt(255);
+    const g = this.getRandomInt(255);
+    const b = this.getRandomInt(255);
+    const a = Math.random().toFixed(2);
+    return new Color(r, g, b, a);
+  }
+}
+
+// 目前仅支持方形
+class Node {
+  constructor({
+    x, y, w, h, color
+  }) {
+    this.x = x || 0;
+    this.y = y || 0;
+    this.w = w || 10;
+    this.h = h || 10;
+    this.color = color || Color.getRandomColor();
+  }
+  render() {
+    const _currentTranslate = ctx._currentTranslate;
+    ctx.fillStyle = this.color.getColor();
+    ctx.fillRect(this.x - _currentTranslate[0], this.y - _currentTranslate[1], this.w, this.h);
+  }
+}
+
+const objects = [...Array(Math.ceil(Math.random() * 100))].map(() => {
+  return new Node({
+    x: Math.ceil((Math.random() - 0.5) * 1000),
+    y: Math.ceil((Math.random() - 0.5) * 1000),
+    w: Math.ceil(Math.random() * 100 + 5),
+    h: Math.ceil(Math.random() * 100 + 5)
+  });
+});
+
+let zoom = 1;
+let sign2 = -1;
+const render = () => {
+  if (zoom <= 0.01 || zoom >= 2) {
+    sign2 *= -1;
+  }
+  zoom += sign2 * 0.01;
+
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.save();
+
+  // ctx.translate(0, 0);
+  ctx.translate(w / 2, h / 2);
+  ctx._currentTranslate = [w / 2, h / 2];
+
+  ctx.scale(zoom, zoom);
+
+  objects.forEach(node => {
+    node.render();
+  });
+
+  ctx.font = "24px serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = new Color(255, 255, 0).getColor();
+  const _currentTranslate = ctx._currentTranslate;
+  ctx.fillText("Hello world!", 0 - _currentTranslate[0], 0 - _currentTranslate[1]);
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, 80, 20);
+  ctx.font = "18px serif";
+  ctx.textBaseline = 'top';
+  ctx.textAlign = "left";
+  ctx.fillStyle = '#000';
+  ctx.fillText("zoom: " + zoom.toFixed(2), 0, 0);
+  ctx.restore();
+};
+
+function animate() {
+  render();
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+
+</html>

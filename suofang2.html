@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+
+    </style>
+
+</head>
+<body>
+    <div style="margin: 0 auto;text-align: center;">
+        <canvas id="canvas-1" style="border:#666 1px solid;" width="1000" height="1000">
+        </canvas>
+    </div>
+    
+    
+    <script>
+    var c   = document.getElementById("canvas-1");
+    var ctx = c.getContext("2d");
+    ctx.fillStyle="orange";
+    ctx.fillRect(100,100,100,100);
+    ctx.translate(-100,-100 )
+
+    ctx.scale(2,2)
+   
+    
+    //ctx.transform(2,0,0,2,-100,-100);
+    ctx.fillStyle="green";
+    ctx.fillRect(100,100,100,100);
+  
+    </script>
+</body>
+</html>

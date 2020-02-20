@@ -8,7 +8,7 @@ class Chart {
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
         this.W = 500; //画布宽
-        this.H = 400; //画布高
+        this.H = 500; //画布高
         this.paddingTop = 0;//canvas容器距上高度（为标题留空白）
         this.paddingBottom = 30;
         this.title = '';//散点图的标题
@@ -19,6 +19,9 @@ class Chart {
         this.animateArr = [];
         this.mapDataArr = [];//被处理后的整个地图数据
         this.info = {};
+        this.maxScale = 1.728;
+        this.translateX = 0;
+        this.translateY = 0;
         this.scale = 1;//地图放大倍数
 
     }
@@ -90,6 +93,47 @@ class Map extends Chart {
             font: '18px arial'
         }
     }
+    beLarger(e) {
+        let that = this,
+            ctx = this.ctx,
+            currentScale = this.scale;
+
+        let box = that.canvas.getBoundingClientRect(),
+            pos = {
+                x: e.srcEvent.clientX - box.left,
+                y: e.srcEvent.clientY - box.top
+            },
+            { x, y } = pos;
+
+
+
+        //if (currentScale > 1) {//放大了的情况
+        if (currentScale < that.maxScale) {//最大了
+            currentScale = that.scale = currentScale * 1.2//放大1.2倍
+            if (currentScale > 1.728) {
+                currentScale = 1.728
+            }
+            ctx.clearRect(0, 0, that.W, that.H)
+            //点击的当前点位移了
+            console.log("平移距离", (x - currentScale * x), (y - currentScale * y))
+            //ctx.transform(currentScale,0,0,currentScale,(x - currentScale * x),(y - currentScale * y));
+            that.translateX = (x - currentScale * x);
+            that.translateY = (y - currentScale * y);
+            console.log("双击点的坐标", x, y, "坐标系里真实坐标", 2 * x + this.translateX, 2 * y + this.translateY)
+            ctx.translate((x - currentScale * x) * 2, (y - currentScale * y) * 2)//画布偏移
+            ctx.scale(currentScale, currentScale)//TODO 确认是否是累计的
+            ctx.save();
+
+            //绘制坐标系
+            that.create()
+            ctx.restore()
+        } else {
+            alert("最大了，不能放大了！")
+        }
+        //}
+
+    }
+
 
     addEvent() {
         let that = this,
@@ -123,31 +167,17 @@ class Map extends Chart {
         hammerManager.get('singletap').requireFailure('doubletap');
 
         hammerManager.on("doubletap", function (e) {
-            console.log("双击了");
-            let box = that.canvas.getBoundingClientRect(),
-                pos = {
-                    x: e.srcEvent.clientX - box.left,
-                    y: e.srcEvent.clientY - box.top
-                }
-            that.scale = that.scale * 1.2;
-            console.log("scale", that.scale)
-            ctx.clearRect(0, 0, that.W, that.H)
-            ctx.save();
-            console.log(pos.x, pos.y);
-            //ctx.translate(-pos.x * (that.scale-1), -pos.y * (that.scale -1))
-            ctx.scale(that.scale, that.scale);
-            that.create()
-
-
+            that.beLarger(e);
         })
         hammerManager.on("singletap", function (e) {
             e.preventDefault()
             let box = that.canvas.getBoundingClientRect(),
                 pos = {
-                    x: e.srcEvent.clientX - box.left - (box.width - canvas.width / 2) / 2,
-                    y: e.srcEvent.clientY - box.top - (box.height - canvas.height / 2) / 2
+                    x: e.srcEvent.clientX - box.left,
+                    y: e.srcEvent.clientY - box.top
                 }
-            console.log(pos.x, pos.y);
+            console.log("当前点坐标", pos.x, pos.y);
+            //当前点击点的坐标是（translateX+pos.x,translateY+pos.y ）    
             //判断点击的点在坐标网格中(*2 是因为canvas放大了两倍)
             if (2 * pos.x > 0 && 2 * pos.x < W && pos.y * 2 > that.paddingTop && pos.y * 2 < H - that.paddingBottom) {
                 let arr = [] //存放点中点的信息
@@ -159,15 +189,15 @@ class Map extends Chart {
                         obj = item.data[j]
                         //ctx.beginPath()
                         //ctx.fillStyle = 'rgba(0,0,0,0.1)'
-                        ctx.rect(obj.x * currentScale - imgW / 2, obj.y * currentScale - imgH, imgW, imgH)
+                        ctx.rect(obj.x * currentScale - imgW / currentScale / 2, obj.y * currentScale - imgH / currentScale, imgW / currentScale, imgH / currentScale)
+                        //(x * currentScale - makerW / currentScale / 2)
                         //console.log(i,j,ctx.isPointInPath(pos.x, pos.y))
 
                         if (ctx.isPointInPath(pos.x * 2 * currentScale, pos.y * 2 * currentScale)) {
                             arr.push(obj);
                             that.clearMap({ i: i, j: j });
-                            console.log(i, j)
-                            //obj是一个点的所有信息
-                            that.drawCrossLine(obj)
+                            console.log(i, j, obj.x, obj.y)
+
                             break;
                         }
                     }
@@ -233,12 +263,12 @@ class Map extends Chart {
     drawX() {
         let that = this,
             ctx = this.ctx,
-            //currentScale = that.scale,
-            W = this.W,
-            H = this.H,
+            currentScale = 1,
+            W = this.W * currentScale,//放大后的
+            H = this.H * currentScale,
             padding = 0,
-            paddingTop = that.paddingTop,
-            paddingBottom = that.paddingBottom,
+            paddingTop = that.paddingTop * currentScale,
+            paddingBottom = that.paddingBottom * currentScale,
             xLength = W,
             xl = this.xAxis.data.length,//被分成多少段
             xs = xLength / xl;//x每段长度
@@ -249,27 +279,29 @@ class Map extends Chart {
         ctx.clearRect(0, 0, W, H);
         // x轴
         ctx.save();
+        //ctx.translate(50,50)
         ctx.beginPath();
         ctx.setLineDash([])
-        ctx.translate(0, H - paddingBottom);
-        ctx.moveTo(0, 0);
-        ctx.lineTo(W, 0);
+        //ctx.translate(0, H - paddingBottom);
+        ctx.moveTo(0, H - paddingBottom);
+        ctx.lineTo(W, H - paddingBottom);
         ctx.stroke();
 
-        this.xAxis.data.forEach((num, i) => {
+        this.xAxis.dataShow.forEach((num, i) => {
             var x = xs * (i + 1) + 0.5,
                 txt;
 
-            if (that.xAxis.formatter) {
-                txt = that.xAxis.formatter.replace('{value}', num);
+            if (that.xAxis) {
+                //txt = that.xAxis.formatter.replace('{value}', num);
+                txt = num
             }
-            ctx.fillText(txt, x, 20);
+            ctx.fillText(txt, x, H - paddingBottom + 20);
             ctx.beginPath();
             ctx.lineWidth = 0.5
             ctx.setLineDash([3, 6])
             ctx.strokeStyle = 'gray';
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, - H);
+            ctx.moveTo(x, H - paddingBottom);
+            ctx.lineTo(x, paddingTop);
             ctx.stroke();
         });
         //绘制（0，0）点的垂直线
@@ -277,30 +309,31 @@ class Map extends Chart {
         ctx.lineWidth = 0.5
         ctx.setLineDash([3, 6])
         ctx.strokeStyle = 'gray';
-        ctx.moveTo(0, 0);
-        ctx.lineTo(0, - H);
+        ctx.moveTo(0, H - paddingBottom);
+        ctx.lineTo(0, 0);
         ctx.stroke();
 
         ctx.restore();
     }
     drawY() {
         var that = this,
-            //currentScale = that.scale,
-            xLength = this.W,
-            yLength = (this.H - this.paddingBottom - this.paddingTop),
+            currentScale = 1,
+            xLength = this.W * currentScale,
+            yLength = (this.H - this.paddingBottom - this.paddingTop) * currentScale,
             yl = this.yAxis.data.length - 1,
             ys = yLength / yl,
             xl = this.xAxis.data.length,//被分成多少段
             xs = xLength / xl,
             ctx = this.ctx;
 
-
-        [...this.yAxis.data].reverse().forEach((num, i) => {
+        ctx.save();
+        [...this.yAxis.dataShow].reverse().forEach((num, i) => {
             var y = ys * (i + 1) + 0.5,
                 txt;
             ctx.textAlign = 'right';
-            if (that.yAxis.formatter) {
-                txt = that.yAxis.formatter.replace('{value}', num);
+            if (that.yAxis) {
+                //txt = that.yAxis.formatter.replace('{value}', num);
+                txt = num
             }
             ctx.fillText(txt, xs - 10, ys * i + this.paddingTop + 20);
             if (i < yl) {//最后一根有x轴代替，不用画了
@@ -308,8 +341,8 @@ class Map extends Chart {
                 ctx.lineWidth = 0.5
                 ctx.setLineDash([3, 6])
                 ctx.strokeStyle = 'gray';
-                ctx.moveTo(0, ys * i + this.paddingTop);
-                ctx.lineTo(xLength, ys * i + this.paddingTop);
+                ctx.moveTo(0, ys * i + this.paddingTop * currentScale);
+                ctx.lineTo(xLength, ys * i + this.paddingTop * currentScale);
                 ctx.stroke();
             }
 
@@ -354,9 +387,12 @@ class Map extends Chart {
     createMaker(x, y, type) {
         let ctx = this.ctx,
             img = new Image(),
-            currentScale = this.scale,
+            that = this,
+            currentScale = 1,
             makerH = 57,
-            makerW = 51
+            makerW = 51,
+            selectedMakerW = 117,
+            selectedMakerH = 138
         switch (type) {
             case "type_0"://默认产品
                 img.src = "data:image/png;base64,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"
@@ -377,20 +413,24 @@ class Map extends Chart {
                 img.src = "data:image/png;base64,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"
                 break;
         }
+        console.log("图标的宽度", makerW / that.scale / 2, "对应的缩放比例是", that.scale)
         img.onload = function () {
-            ctx.drawImage(this, 0, 0, makerW, makerH, x * currentScale - makerW / 2, y * currentScale - makerH, makerW, makerH)
+            if (type == "type_4") {
+                ctx.drawImage(this, 0, 0, selectedMakerW, selectedMakerH, (x * currentScale - selectedMakerW / that.scale / 2), (y * currentScale - selectedMakerH / that.scale), selectedMakerW / that.scale, selectedMakerH / that.scale)
+            } else {
+                ctx.drawImage(this, 0, 0, makerW, makerH, (x * currentScale - makerW / that.scale / 2), (y * currentScale - makerH / that.scale), makerW / that.scale, makerH / that.scale)
+            }
         }
 
     }
     /**
      * 绘制标记
      */
-    drawMarker() {
+    drawMarker(pos) {
         let series = this.series,
             ctx = this.ctx,
-            currentScale = this.scale,//scale放大是对于坐标系的放大，点的实际坐标也相应的放大对于倍数即可
+            currentScale = 1,//scale放大是对于坐标系的放大，点的实际坐标也相应的放大对于倍数即可
             that = this
-        console.log("当前放大倍数是：", currentScale)
         for (let i = 0; i < series.length; i++) {
             let seriesObj = {},//mapDataArr 的每一个元素
                 obj = this.dataToXY(series[i].data)  //x,y轴坐标信息
@@ -401,16 +441,23 @@ class Map extends Chart {
             }
 
             for (let j = 0; j < series[i].data.length; j++) {
-                that.createMaker(obj[j].x, obj[j].y, seriesObj.type)
+                if (pos && i == pos.i && j == pos.j) {
+                    that.createMaker(obj[j].x, obj[j].y, "type_4")
+                } else {
+                    that.createMaker(obj[j].x, obj[j].y, seriesObj.type)
+                }
                 //console.log(j, obj[j].x, obj[j].y, seriesObj.type)
                 ctx.beginPath();
                 ctx.fillStyle = "red"
                 ctx.arc(obj[j].x * currentScale, obj[j].y * currentScale, 2, 0, Math.PI * 2, false);
+                //ctx.arc(obj[j].x * (currentScale+1)/2, obj[j].y * (currentScale+1)/2, 5, 0, Math.PI * 2, false);
                 ctx.fill();
 
             }
             that.mapDataArr.push(seriesObj);
         }
+        console.log("当前放大倍数是：", currentScale, "mapData", this.mapDataArr)
+
     }
 
     clearMap(pos) {
@@ -423,12 +470,17 @@ class Map extends Chart {
 
         this.drawX();
         this.drawY();
-        this.drawMarker();
+        this.drawMarker(pos);
+
         if (pos) {
             item = that.mapDataArr[pos.i]
             obj = item.data[pos.j]
             ctx.save();
-            that.createMaker(obj.x, obj.y, item.type)
+            //obj是一个点的所有信息
+            that.drawCrossLine(obj)
+            //点击点的特殊绘制在drawMaker中完成，此处可不处理
+            //that.createMaker(obj.x, obj.y, "type_4")
+
             //ctx.scale(1.2, 1.2);
             ctx.restore();
         }
@@ -445,22 +497,23 @@ class Map extends Chart {
             xs = xLength / xl,
             { x, y, xVal, yVal } = obj
 
+
         ctx.save()
         ctx.lineWidth = 3
-        ctx.strokeStyle = "rgb(252,121,70,0.2)";
+        ctx.strokeStyle = "rgba(252,121,70,0.2)";
         ctx.beginPath()
         ctx.setLineDash([])//切换实线
-        ctx.moveTo(x * currentScale + 0.5, 0)
-        ctx.lineTo(x * currentScale + 0.5, H - that.paddingTop - that.paddingBottom)
+        ctx.moveTo(x + 0.5, 0)
+        ctx.lineTo(x + 0.5, H - that.paddingTop - that.paddingBottom)
         ctx.stroke()
-        ctx.moveTo(0, y * currentScale + 0.5)
-        ctx.lineTo(W, y * currentScale + 0.5)
+        ctx.moveTo(0, y + 0.5)
+        ctx.lineTo(W, y + 0.5)
         ctx.stroke()
 
         //对应坐标轴的坐标值标注
         //ctx.font = ''
-        ctx.fillText(xVal, x * currentScale, H - that.paddingTop - 10)
-        ctx.fillText(yVal, xs - 10, y * currentScale)
+        ctx.fillText(xVal, x, H - that.paddingTop - 10)
+        ctx.fillText(yVal, xs - 10, y)
 
 
 
