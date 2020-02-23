@@ -20,16 +20,21 @@
     <script>
     var c   = document.getElementById("canvas-1");
     var ctx = c.getContext("2d");
-    ctx.fillStyle="orange";
-    ctx.fillRect(100,100,100,100);
-    ctx.translate(-100,-100 )
-
+    ctx.translate(10,10)
     ctx.scale(2,2)
-   
-    
     //ctx.transform(2,0,0,2,-100,-100);
+    ctx.save()
+    ctx.fillStyle="orange";
+    ctx.fillRect(0,0,10,10);
+    ctx.restore()
+    //ctx.translate(-5,-5)
+    ctx.scale(2,2)
+    ctx.save()
     ctx.fillStyle="green";
-    ctx.fillRect(100,100,100,100);
+    ctx.fillRect(0,0,10,10);
+    ctx.restore()
+  /*   ctx.fillStyle="green";
+    ctx.fillRect(100,100,100,100); */
   
     </script>
 </body>

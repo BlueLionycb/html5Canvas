@@ -1,4 +1,3 @@
-
 /**
  * 图表基类
  */
@@ -19,10 +18,13 @@ class Chart {
         this.animateArr = [];
         this.mapDataArr = [];//被处理后的整个地图数据
         this.info = {};
-        this.maxScale = 1.728;
+        this.maxScale = 8;
+        this.scaleSize = 1.2;//每次放大倍数
+        this.moveScale = 0.1;
         this.translateX = 0;
         this.translateY = 0;
         this.scale = 1;//地图放大倍数
+        this.matrix = new Matrix();
 
     }
     init(opt) {
@@ -40,7 +42,6 @@ class Chart {
         this.container.appendChild(this.canvas);
         this.container.appendChild(this.tip);
         this.create(true);
-        //this.bindEvent();
         this.addEvent();
     }
     showTip(pos, title, arr) {
@@ -93,48 +94,48 @@ class Map extends Chart {
             font: '18px arial'
         }
     }
-    beLarger(e) {
+    beLarger(evt) {
         let that = this,
             ctx = this.ctx,
+            maxScale = this.maxScale,
+            scaleSize = this.scaleSize,
             currentScale = this.scale;
 
         let box = that.canvas.getBoundingClientRect(),
             pos = {
-                x: e.srcEvent.clientX - box.left,
-                y: e.srcEvent.clientY - box.top
+                x: evt.srcEvent.clientX - box.left,
+                y: evt.srcEvent.clientY - box.top
             },
             { x, y } = pos;
 
-
-
-        //if (currentScale > 1) {//放大了的情况
-        if (currentScale < that.maxScale) {//最大了
-            currentScale = that.scale = currentScale * 1.2//放大1.2倍
-            if (currentScale > 1.728) {
-                currentScale = 1.728
+        if (currentScale < maxScale) {
+            currentScale = this.scale = currentScale * scaleSize;//放大scaleSize 倍
+            if (currentScale > maxScale) {
+                currentScale = this.scale = maxScale
             }
-            ctx.clearRect(0, 0, that.W, that.H)
-            //点击的当前点位移了
-            console.log("平移距离", (x - currentScale * x), (y - currentScale * y))
-            //ctx.transform(currentScale,0,0,currentScale,(x - currentScale * x),(y - currentScale * y));
-            that.translateX = (x - currentScale * x);
-            that.translateY = (y - currentScale * y);
-            console.log("双击点的坐标", x, y, "坐标系里真实坐标", 2 * x + this.translateX, 2 * y + this.translateY)
-            ctx.translate((x - currentScale * x) * 2, (y - currentScale * y) * 2)//画布偏移
-            ctx.scale(currentScale, currentScale)//TODO 确认是否是累计的
-            ctx.save();
-
-            //绘制坐标系
-            that.create()
-            ctx.restore()
-        } else {
+            // 先缩放
+            this.matrix.scale(scaleSize, scaleSize);
+            // 获得原点偏移量
+            let {e, f} = this.matrix;
+            let originX = e;
+            let originY = f;
+            // 计算点击点的偏移量
+            let deltaX = (x - originX) * (this.scale - 1);
+            let deltaY = (y - originY) * (this.scale - 1);
+            // 再平移一下坐标
+            this.matrix.translate(-deltaX, -deltaY);
+            let {a, b, c, d} = this.matrix;
+            let e1 = this.matrix.e;
+            let f1 = this.matrix.f;
+            // 重新设置 canvas 的变换矩阵
+            this.ctx.setTransform(a, b, c, d, e1, f1);
+            this.refresh();
+        } else { //最大了
             alert("最大了，不能放大了！")
         }
         //}
 
     }
-
-
     addEvent() {
         let that = this,
             ctx = that.ctx,
@@ -147,6 +148,8 @@ class Map extends Chart {
             imgW = 51,
             currentScale = this.scale,//当前放大倍数
             xs = xLength / xl;//x每段长度
+
+        let panCount = 0;//移动次数
         let hammerDom = document.querySelector("canvas"),
             hammer = new Hammer(hammerDom),
             hammerManager = new Hammer.Manager(hammerDom, {
@@ -176,8 +179,8 @@ class Map extends Chart {
                     x: e.srcEvent.clientX - box.left,
                     y: e.srcEvent.clientY - box.top
                 }
-            console.log("当前点坐标", pos.x, pos.y);
-            //当前点击点的坐标是（translateX+pos.x,translateY+pos.y ）    
+            console.log("当前点坐标", pos.x, pos.y, "平移距离:", that.translateX, that.translateY, "放大倍数:" + that.scale);
+            //当前点击点的坐标是（translateX+pos.x,translateY+pos.y ）
             //判断点击的点在坐标网格中(*2 是因为canvas放大了两倍)
             if (2 * pos.x > 0 && 2 * pos.x < W && pos.y * 2 > that.paddingTop && pos.y * 2 < H - that.paddingBottom) {
                 let arr = [] //存放点中点的信息
@@ -210,79 +213,65 @@ class Map extends Chart {
                 } else {//点击在坐标系中非标注点
                     that.clearMap();
                 }
-
-
-
             } else {
                 //不在网格中的处理
                 that.clearMap();
                 //return;
             }
-
-
-
         })
-
         //this.canvas.addEventListener("click", , false)//冒泡过程中执行处理函数
-
-        hammer.on("pan", function (e) {
-            alert("pan")
-            console.log(e)
-
+        hammer.on("pan", (evt) => {
+            let deltaX = evt.deltaX * this.moveScale; //x方向滑动距离
+            let deltaY = evt.deltaY * this.moveScale; //y方向滑动距离
+            evt.preventDefault();
+            this.matrix.translate(deltaX, deltaY);
+            let {a, b, c, d, e, f} = this.matrix;
+            this.ctx.setTransform(a, b, c, d, e, f);
+            this.refresh();
         })
     }
 
-    create(isFirst) {
-        //刷新进来的
-        if (isFirst) {
-            isFirst = true;
-        } else {
-            isFirst = false;
-        }
-        // 组织数据
-        //this.initData();
-        // 画坐标系
-        if (isFirst) {//初始化进来
-            this.drawX();
-            this.drawY();
-            this.drawMarker();
-        } else {
-            console.log("事件点击");
-            this.drawX();
-            this.drawY();
-            this.drawMarker();
-        }
-        // 画y轴刻度
-        //this.drawY();
-        // 画标签
-        //this.drawTag();
-        // 执行动画
-        //this.animate();
+    create() {
+        this.drawX();
+        this.drawY();
+        this.drawMarker();
+    }
+
+    clear() {
+        let { ctx } = this;
+        ctx.save();
+        // 为了清除 canvas 上的所有内容，先将变换矩阵重置
+        ctx.setTransform();
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.restore();
+    }
+
+
+    refresh() {
+        this.clear();
+        this.drawX();
+        this.drawY();
+        this.drawMarker();
     }
 
     drawX() {
         let that = this,
             ctx = this.ctx,
-            currentScale = 1,
-            W = this.W * currentScale,//放大后的
-            H = this.H * currentScale,
+            W = this.W,//放大后的
+            H = this.H,
             padding = 0,
-            paddingTop = that.paddingTop * currentScale,
-            paddingBottom = that.paddingBottom * currentScale,
+            paddingTop = that.paddingTop,
+            paddingBottom = that.paddingBottom,
             xLength = W,
             xl = this.xAxis.data.length,//被分成多少段
             xs = xLength / xl;//x每段长度
 
         Object.assign(ctx, this.xAxisStyle);
 
-        console.log("每段长度", xs)
-        ctx.clearRect(0, 0, W, H);
         // x轴
         ctx.save();
-        //ctx.translate(50,50)
         ctx.beginPath();
         ctx.setLineDash([])
-        //ctx.translate(0, H - paddingBottom);
         ctx.moveTo(0, H - paddingBottom);
         ctx.lineTo(W, H - paddingBottom);
         ctx.stroke();
@@ -317,9 +306,8 @@ class Map extends Chart {
     }
     drawY() {
         var that = this,
-            currentScale = 1,
-            xLength = this.W * currentScale,
-            yLength = (this.H - this.paddingBottom - this.paddingTop) * currentScale,
+            xLength = this.W,
+            yLength = this.H - this.paddingBottom - this.paddingTop,
             yl = this.yAxis.data.length - 1,
             ys = yLength / yl,
             xl = this.xAxis.data.length,//被分成多少段
@@ -341,8 +329,8 @@ class Map extends Chart {
                 ctx.lineWidth = 0.5
                 ctx.setLineDash([3, 6])
                 ctx.strokeStyle = 'gray';
-                ctx.moveTo(0, ys * i + this.paddingTop * currentScale);
-                ctx.lineTo(xLength, ys * i + this.paddingTop * currentScale);
+                ctx.moveTo(0, ys * i + this.paddingTop);
+                ctx.lineTo(xLength, ys * i + this.paddingTop);
                 ctx.stroke();
             }
 
@@ -388,7 +376,6 @@ class Map extends Chart {
         let ctx = this.ctx,
             img = new Image(),
             that = this,
-            currentScale = 1,
             makerH = 57,
             makerW = 51,
             selectedMakerW = 117,
@@ -413,12 +400,12 @@ class Map extends Chart {
                 img.src = "data:image/png;base64,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"
                 break;
         }
-        console.log("图标的宽度", makerW / that.scale / 2, "对应的缩放比例是", that.scale)
+        //console.log("图标的宽度", makerW / that.scale / 2, "对应的缩放比例是", that.scale)
         img.onload = function () {
             if (type == "type_4") {
-                ctx.drawImage(this, 0, 0, selectedMakerW, selectedMakerH, (x * currentScale - selectedMakerW / that.scale / 2), (y * currentScale - selectedMakerH / that.scale), selectedMakerW / that.scale, selectedMakerH / that.scale)
+                ctx.drawImage(this, 0, 0, selectedMakerW, selectedMakerH, (x - selectedMakerW / that.scale / 2), (y - selectedMakerH / that.scale), selectedMakerW / that.scale, selectedMakerH / that.scale)
             } else {
-                ctx.drawImage(this, 0, 0, makerW, makerH, (x * currentScale - makerW / that.scale / 2), (y * currentScale - makerH / that.scale), makerW / that.scale, makerH / that.scale)
+                ctx.drawImage(this, 0, 0, makerW, makerH, (x - makerW / that.scale / 2), (y - makerH / that.scale), makerW / that.scale, makerH / that.scale)
             }
         }
 
@@ -429,7 +416,7 @@ class Map extends Chart {
     drawMarker(pos) {
         let series = this.series,
             ctx = this.ctx,
-            currentScale = 1,//scale放大是对于坐标系的放大，点的实际坐标也相应的放大对于倍数即可
+            //scale放大是对于坐标系的放大，点的实际坐标也相应的放大对于倍数即可
             that = this
         for (let i = 0; i < series.length; i++) {
             let seriesObj = {},//mapDataArr 的每一个元素
@@ -449,24 +436,20 @@ class Map extends Chart {
                 //console.log(j, obj[j].x, obj[j].y, seriesObj.type)
                 ctx.beginPath();
                 ctx.fillStyle = "red"
-                ctx.arc(obj[j].x * currentScale, obj[j].y * currentScale, 2, 0, Math.PI * 2, false);
-                //ctx.arc(obj[j].x * (currentScale+1)/2, obj[j].y * (currentScale+1)/2, 5, 0, Math.PI * 2, false);
+                ctx.arc(obj[j].x, obj[j].y, 2, 0, Math.PI * 2, false);
                 ctx.fill();
 
             }
             that.mapDataArr.push(seriesObj);
         }
-        console.log("当前放大倍数是：", currentScale, "mapData", this.mapDataArr)
-
     }
 
     clearMap(pos) {
         let that = this,
             obj,
             item,
-            //currentScale = this.scale,
             ctx = this.ctx;
-        ctx.clearRect(0, 0, that.W, that.H)
+        this.clear();
 
         this.drawX();
         this.drawY();
@@ -480,8 +463,6 @@ class Map extends Chart {
             that.drawCrossLine(obj)
             //点击点的特殊绘制在drawMaker中完成，此处可不处理
             //that.createMaker(obj.x, obj.y, "type_4")
-
-            //ctx.scale(1.2, 1.2);
             ctx.restore();
         }
     }
@@ -522,7 +503,7 @@ class Map extends Chart {
     }
 
 
-    /** 
+    /**
      * window坐标转canvas坐标
      */
     windowToCanvas(canvas, x, y) {
@@ -538,16 +519,15 @@ class Map extends Chart {
             start = new Date(),
             time = 0,
             item, obj, h, r, isStop = true;
-        (function run() {
+        let run = () => {
             ctx.save();
-            ctx.clearRect(0, 0, that.W, that.H);
+            this.clear();
             // 画坐标系
             that.drawAxis();
             // 画标签
             that.drawTag();
             // 画y轴刻度
             that.drawY();
-            ctx.translate(that.padding, that.H - that.padding);
             ctx.shadowBlur = 1;
             isStop = true;
             time = new Date() - start;
@@ -607,7 +587,8 @@ class Map extends Chart {
                 return;
             }
             requestAnimationFrame(run);
-        }());
+        };
+        run();
     }
 
 }
